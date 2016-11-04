@@ -6,7 +6,7 @@ case "$TRAVIS_BRANCH" in
   master)
     OPENSHIFT_APP="dev2"
     ;;
-  dev-*)
+  dev*)
     OPENSHIFT_APP="dev2"
     ;;
   *)

